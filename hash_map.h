@@ -12,8 +12,10 @@
 #ifndef HASHMAP_HASH_MAP_H
 #define HASHMAP_HASH_MAP_H
 
+// Hash table with separate chaining, dynamic expansion.
 template<class KeyType, class ValueType, class Hash = std::hash<KeyType>>
 class HashMap {
+  private:
     using KeyVal = typename std::pair<KeyType, ValueType>;
     using ConstKeyVal = typename std::pair<const KeyType, ValueType>;
     using ElemIter = typename std::list<ConstKeyVal>::iterator;
@@ -24,10 +26,12 @@ class HashMap {
     std::list<ConstKeyVal> all;
     std::vector<std::list<ElemIter>> table;
 
+    // Bucket number by key.
     size_t bucket_id(const KeyType &key) const {
         return hasher(key) % table.size();
     }
 
+    // Resizes the array of buckets.
     void resize(size_t table_size) {
         table.clear();
         table.resize(table_size);
@@ -36,13 +40,14 @@ class HashMap {
         }
     }
 
+    // Doubles the number of buckets if the number of elements exceeded it.
     void resize_if_necessary() {
         if (all_size > table.size()) {
             resize(2 * table.size());
         }
     }
 
-public:
+  public:
     explicit HashMap(Hash custom_hasher = Hash()) : hasher(custom_hasher) {
         all_size = 0;
         resize(1);
@@ -95,18 +100,22 @@ public:
         return *this;
     }
 
+    // Actual number of elements in the hash table.
     size_t size() const {
         return all_size;
     }
 
+    // Checks if the hash table is empty.
     bool empty() const {
         return all_size == 0;
     }
 
+    // Hasher function.
     Hash hash_function() const {
         return hasher;
     }
 
+    // Inserts pair (key, value) into the hash table. If such key exists, nothing is inserted.
     void insert(const KeyVal &p) {
         size_t id = bucket_id(p.first);
         for (ConstElemIter it : table[id]) {
@@ -120,6 +129,7 @@ public:
         resize_if_necessary();
     }
 
+    // Erases the given key from the hash table. If there is no such key, nothing happens.
     void erase(const KeyType &key) {
         size_t id = bucket_id(key);
         for (auto iter = table[id].begin(); iter != table[id].end(); ++iter) {
@@ -136,22 +146,27 @@ public:
     using iterator = ElemIter;
     using const_iterator = ConstElemIter;
 
+    // Iterator for begin.
     iterator begin() {
         return all.begin();
     }
 
+    // Const iterator for begin
     const_iterator begin() const {
         return all.begin();
     }
 
+    // Iterator for end
     iterator end() {
         return all.end();
     }
 
+    // Const iterator for end
     const_iterator end() const {
         return all.end();
     }
 
+    // Returns iterator for the element with the given key. If there is no such key, end() is returned.
     iterator find(const KeyType &key) {
         size_t id = bucket_id(key);
         for (ElemIter it : table[id]) {
@@ -162,6 +177,7 @@ public:
         return end();
     }
 
+    // Const version of find()
     const_iterator find(const KeyType &key) const {
         size_t id = bucket_id(key);
         for (ConstElemIter it : table[id]) {
@@ -172,6 +188,7 @@ public:
         return end();
     }
 
+    // Access to value by key. If the key is absent, (key, ValueType()) is inserted.
     ValueType &operator[](const KeyType &key) {
         size_t id = bucket_id(key);
         for (ElemIter it : table[id]) {
@@ -186,6 +203,7 @@ public:
         return all.begin()->second;
     }
 
+    // Read access to value by key. If the key is absent, std::out_of_range is thrown.
     const ValueType &at(const KeyType &key) const {
         size_t id = bucket_id(key);
         for (ConstElemIter it : table[id]) {
@@ -196,6 +214,7 @@ public:
         throw std::out_of_range("");
     }
 
+    // Erases all data from the hash table.
     void clear() {
         for (const auto &elem : all) {
             size_t id = bucket_id(elem.first);

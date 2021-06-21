@@ -3,5 +3,4 @@ project(HashMap)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(HashMap
-        main.cpp)
+add_executable(HashMap main.cpp)
