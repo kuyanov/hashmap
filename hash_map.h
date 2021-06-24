@@ -26,99 +26,56 @@ class HashMap {
     using ConstElemIter = typename std::list<ConstKeyVal>::const_iterator;
 
   public:
+    static constexpr int RESIZE_RATIO = 2;
+
     explicit HashMap(Hash custom_hasher = Hash()) : hasher(custom_hasher) {
         allSize = 0;
-        resize(1);
+        table.resize(1);
     }
 
     template<class ForwardIterator>
     HashMap(ForwardIterator begin, ForwardIterator end, Hash custom_hasher = Hash())
             : hasher(custom_hasher) {
-        allSize = 0;
-        while (begin != end) {
-            all.push_front(*begin);
-            ++allSize;
-            ++begin;
-        }
-        resize(2 * allSize);
+        std::copy(begin, end, std::front_inserter(all));
+        allSize = all.size();
+        initBuckets(allSize);
     }
 
     HashMap(std::initializer_list<KeyVal> elements, Hash custom_hasher = Hash())
             : hasher(custom_hasher) {
-        std::copy(elements.begin(), elements.end(), std::back_inserter(all));
-        allSize = elements.size();
-        resize(2 * allSize);
+        std::copy(elements.begin(), elements.end(), std::front_inserter(all));
+        allSize = all.size();
+        initBuckets(allSize);
     }
 
-    HashMap(const HashMap &other) {
-        hasher = other.hasher;
-        allSize = other.allSize;
-        table.resize(other.table.size());
-        for (size_t id = 0; id < other.table.size(); ++id) {
-            for (ConstElemIter it : other.table[id]) {
-                all.push_front(*it);
-                table[id].push_front(all.begin());
-            }
-        }
+    HashMap(const HashMap &other) : hasher(other.hasher) {
+        std::copy(other.all.begin(), other.all.end(), std::front_inserter(all));
+        allSize = all.size();
+        initBuckets(allSize);
     }
 
     HashMap &operator=(HashMap other) {
         hasher = other.hasher;
-        table.clear();
-        table.resize(other.table.size());
         all.clear();
-        allSize = 0;
-        for (size_t id = 0; id < other.table.size(); ++id) {
-            for (ConstElemIter it : other.table[id]) {
-                all.push_front(*it);
-                ++allSize;
-                table[id].push_front(all.begin());
-            }
-        }
+        std::copy(other.all.begin(), other.all.end(), std::front_inserter(all));
+        allSize = all.size();
+        initBuckets(allSize);
         return *this;
     }
 
     // Actual number of elements in the hash table.
-    size_t size() const {
+    inline size_t size() const {
         return allSize;
     }
 
     // Checks if the hash table is empty.
-    bool empty() const {
+    inline bool empty() const {
         return allSize == 0;
     }
 
     // Hasher function.
-    Hash hash_function() const {
+    inline Hash hash_function() const {
         return hasher;
-    }
-
-    // Inserts pair (key, value) into the hash table. If such key exists, nothing is inserted.
-    void insert(const KeyVal &p) {
-        size_t id = bucketId(p.first);
-        for (ConstElemIter it : table[id]) {
-            if (it->first == p.first) {
-                return;
-            }
-        }
-        all.push_front(p);
-        ++allSize;
-        table[id].push_front(all.begin());
-        resizeIfNecessary();
-    }
-
-    // Erases the given key from the hash table. If there is no such key, nothing happens.
-    void erase(const KeyType &key) {
-        size_t id = bucketId(key);
-        for (auto iter = table[id].begin(); iter != table[id].end(); ++iter) {
-            ConstElemIter it = *iter;
-            if (it->first == key) {
-                table[id].erase(iter);
-                all.erase(it);
-                --allSize;
-                return;
-            }
-        }
     }
 
     using iterator = ElemIter;
@@ -166,7 +123,7 @@ class HashMap {
         return end();
     }
 
-    // Access to value by key. If the key is absent, (key, ValueType()) is inserted.
+    // Access to value by key. If the key is absent, (key, ValueType()) is inserted and returned.
     ValueType &operator[](const KeyType &key) {
         ElemIter it = find(key);
         if (it != end()) {
@@ -189,7 +146,32 @@ class HashMap {
         throw std::out_of_range("");
     }
 
-    // Erases all data from the hash table.
+    // Inserts pair (key, value) into the hash table. If such key exists, nothing is inserted.
+    void insert(const KeyVal &p) {
+        ElemIter it = find(p.first);
+        if (it != end()) {
+            return;
+        }
+        size_t id = bucketId(p.first);
+        all.push_front(p);
+        ++allSize;
+        table[id].push_front(all.begin());
+        resizeIfNecessary();
+    }
+
+    // Erases the given key from the hash table. If there is no such key, nothing happens.
+    void erase(const KeyType &key) {
+        ElemIter it = find(key);
+        if (it == end()) {
+            return;
+        }
+        size_t id = bucketId(key);
+        all.erase(it);
+        --allSize;
+        table[id].erase(std::find(table[id].begin(), table[id].end(), it));
+    }
+
+    // Erases all data from the hash table, preserving the number of buckets.
     void clear() {
         for (const auto &elem : all) {
             size_t id = bucketId(elem.first);
@@ -210,10 +192,10 @@ class HashMap {
         return hasher(key) % table.size();
     }
 
-    // Resizes the array of buckets.
-    void resize(size_t tableSize) {
+    // Initializes buckets based on all elements
+    void initBuckets(size_t tableSize) {
         table.clear();
-        table.resize(tableSize);
+        table.resize(std::max(tableSize, 1ul));
         for (ElemIter it = all.begin(); it != all.end(); ++it) {
             table[bucketId(it->first)].push_front(it);
         }
@@ -222,7 +204,7 @@ class HashMap {
     // Doubles the number of buckets if the number of elements exceeded it.
     void resizeIfNecessary() {
         if (allSize > table.size()) {
-            resize(2 * table.size());
+            initBuckets(RESIZE_RATIO * table.size());
         }
     }
 };
