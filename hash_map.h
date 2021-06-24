@@ -64,17 +64,17 @@ class HashMap {
     }
 
     // Actual number of elements in the hash table.
-    inline size_t size() const {
+    size_t size() const {
         return allSize;
     }
 
     // Checks if the hash table is empty.
-    inline bool empty() const {
+    bool empty() const {
         return allSize == 0;
     }
 
     // Hasher function.
-    inline Hash hash_function() const {
+    Hash hash_function() const {
         return hasher;
     }
 
@@ -82,22 +82,22 @@ class HashMap {
     using const_iterator = ConstElemIter;
 
     // Iterator for begin.
-    inline iterator begin() {
+    iterator begin() {
         return all.begin();
     }
 
     // Const iterator for begin
-    inline const_iterator begin() const {
+    const_iterator begin() const {
         return all.begin();
     }
 
     // Iterator for end
-    inline iterator end() {
+    iterator end() {
         return all.end();
     }
 
     // Const iterator for end
-    inline const_iterator end() const {
+    const_iterator end() const {
         return all.end();
     }
 
