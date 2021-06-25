@@ -1,6 +1,4 @@
-//
-// Created by Fedor Kuyanov on 05.03.2021.
-//
+#pragma once
 
 #include <algorithm>
 #include <iterator>
@@ -9,12 +7,9 @@
 #include <utility>
 #include <vector>
 
-#ifndef HASHMAP_HASH_MAP_H
-#define HASHMAP_HASH_MAP_H
-
 // Hash table with separate chaining, dynamic expansion.
 // For each hash there is a linked list with elements of that hash.
-// When the number of elements exceeds the number of buckets, the number of buckets double and hashes are recomputed.
+// When the number of elements exceeds the number of buckets, the number of buckets doubles and hashes are recomputed.
 // All queries work for O(length of chain) which is O(1) on average.
 // Detailed explanation is there: https://en.wikipedia.org/wiki/Hash_table#Separate_chaining
 template<class KeyType, class ValueType, class Hash = std::hash<KeyType>>
@@ -35,31 +30,35 @@ class HashMap {
 
     template<class ForwardIterator>
     HashMap(ForwardIterator begin, ForwardIterator end, Hash custom_hasher = Hash())
-            : hasher(custom_hasher) {
+            : hasher(std::move(custom_hasher)) {
         std::copy(begin, end, std::front_inserter(all));
         allSize = all.size();
-        initBuckets(allSize);
+        initBuckets(RESIZE_RATIO * allSize);
     }
 
     HashMap(std::initializer_list<KeyVal> elements, Hash custom_hasher = Hash())
-            : hasher(custom_hasher) {
-        std::copy(elements.begin(), elements.end(), std::front_inserter(all));
+            : hasher(std::move(custom_hasher)) {
+        std::copy(std::make_move_iterator(elements.begin()),
+                  std::make_move_iterator(elements.end()),
+                  std::front_inserter(all));
         allSize = all.size();
-        initBuckets(allSize);
+        initBuckets(RESIZE_RATIO * allSize);
     }
 
     HashMap(const HashMap &other) : hasher(other.hasher) {
         std::copy(other.all.begin(), other.all.end(), std::front_inserter(all));
         allSize = all.size();
-        initBuckets(allSize);
+        initBuckets(RESIZE_RATIO * allSize);
     }
 
     HashMap &operator=(HashMap other) {
-        hasher = other.hasher;
+        hasher = std::move(other.hasher);
         all.clear();
-        std::copy(other.all.begin(), other.all.end(), std::front_inserter(all));
+        std::copy(std::make_move_iterator(other.all.begin()),
+                  std::make_move_iterator(other.all.end()),
+                  std::front_inserter(all));
         allSize = all.size();
-        initBuckets(allSize);
+        initBuckets(RESIZE_RATIO * allSize);
         return *this;
     }
 
@@ -208,5 +207,3 @@ class HashMap {
         }
     }
 };
-
-#endif //HASHMAP_HASH_MAP_H
