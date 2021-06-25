@@ -15,7 +15,7 @@
 // Hash table with separate chaining, dynamic expansion.
 // For each hash there is a linked list with elements of that hash.
 // When the number of elements exceeds the number of buckets, the number of buckets double and hashes are recomputed.
-// All queries work for O(length of chain) which is O(1) in average.
+// All queries work for O(length of chain) which is O(1) on average.
 // Detailed explanation is there: https://en.wikipedia.org/wiki/Hash_table#Separate_chaining
 template<class KeyType, class ValueType, class Hash = std::hash<KeyType>>
 class HashMap {
