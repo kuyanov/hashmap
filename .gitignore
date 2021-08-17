@@ -32,4 +32,8 @@
 *.app
 
 # Build files
-cmake-build-*/
+build
+cmake-build-*
+
+# Configuration files
+.idea
