@@ -3,11 +3,6 @@ project(HashMap)
 
 set(CMAKE_CXX_STANDARD 14)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_options("-fsanitize=address")
-    add_link_options("-fsanitize=address")
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_compile_options("-Ofast")
-endif()
+set(CMAKE_CXX_FLAGS_ASAN "-g -fsanitize=address,undefined -fno-sanitize-recover=all")
 
 add_executable(HashMap main.cpp)
