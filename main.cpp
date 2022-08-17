@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <functional>
 #include <stdexcept>
-#include <map>
 
 void fail(const char *message) {
     std::cerr << "Fail:\n";
@@ -75,7 +74,7 @@ namespace internal_tests {
         >::value, "'begin' returns not a const iterator");
         auto hash_f = map.hash_function();
         std::cerr << hash_f(0) << "\n";
-        for (auto cur : map)
+        for (auto cur: map)
             std::cerr << cur.first << " " << cur.second << "\n";
 
         HashMap<int, int>::const_iterator it = map.find(3);
@@ -184,7 +183,7 @@ namespace internal_tests {
                 {"simple", "case"},
                 {"test",   "test"}
         };
-        for (auto cur : map)
+        for (auto cur: map)
             std::cerr << cur.first << " " << cur.second << "\n";
         auto simple_hash = [](unsigned long long x) -> size_t {
             return x % 17239;
@@ -198,7 +197,7 @@ namespace internal_tests {
             fail("wrong hash function in class");
         if (second_map[0] != "a" || second_map[17239] != "check")
             fail("incorrect insert or [ ]");
-        for (auto cur : second_map)
+        for (auto cur: second_map)
             std::cerr << cur.first << " " << cur.second << "\n";
 
         HashMap<int, int, std::function<size_t(int)>> stupid_map(stupid_hash);

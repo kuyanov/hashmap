@@ -14,13 +14,13 @@
 // Detailed explanation is there: https://en.wikipedia.org/wiki/Hash_table#Separate_chaining
 template<class KeyType, class ValueType, class Hash = std::hash<KeyType>>
 class HashMap {
-  private:
+private:
     using KeyVal = typename std::pair<KeyType, ValueType>;
     using ConstKeyVal = typename std::pair<const KeyType, ValueType>;
     using ElemIter = typename std::list<ConstKeyVal>::iterator;
     using ConstElemIter = typename std::list<ConstKeyVal>::const_iterator;
 
-  public:
+public:
     static constexpr int RESIZE_RATIO = 2;
 
     explicit HashMap(Hash custom_hasher = Hash()) : hasher(custom_hasher) {
@@ -63,12 +63,12 @@ class HashMap {
     }
 
     // Actual number of elements in the hash table.
-    std::size_t size() const {
+    [[nodiscard]] size_t size() const {
         return allSize;
     }
 
     // Checks if the hash table is empty.
-    bool empty() const {
+    [[nodiscard]] bool empty() const {
         return allSize == 0;
     }
 
@@ -102,8 +102,8 @@ class HashMap {
 
     // Returns iterator for the element with the given key. If there is no such key, end() is returned.
     iterator find(const KeyType &key) {
-        std::size_t id = bucketId(key);
-        for (ElemIter it : table[id]) {
+        size_t id = bucketId(key);
+        for (ElemIter it: table[id]) {
             if (it->first == key) {
                 return it;
             }
@@ -113,8 +113,8 @@ class HashMap {
 
     // Const version of find()
     const_iterator find(const KeyType &key) const {
-        std::size_t id = bucketId(key);
-        for (ConstElemIter it : table[id]) {
+        size_t id = bucketId(key);
+        for (ConstElemIter it: table[id]) {
             if (it->first == key) {
                 return it;
             }
@@ -128,7 +128,7 @@ class HashMap {
         if (it != end()) {
             return it->second;
         }
-        std::size_t id = bucketId(key);
+        size_t id = bucketId(key);
         all.emplace_front(key, ValueType());
         ++allSize;
         table[id].push_front(all.begin());
@@ -151,7 +151,7 @@ class HashMap {
         if (it != end()) {
             return;
         }
-        std::size_t id = bucketId(p.first);
+        size_t id = bucketId(p.first);
         all.push_front(p);
         ++allSize;
         table[id].push_front(all.begin());
@@ -164,7 +164,7 @@ class HashMap {
         if (it == end()) {
             return;
         }
-        std::size_t id = bucketId(key);
+        size_t id = bucketId(key);
         all.erase(it);
         --allSize;
         table[id].erase(std::find(table[id].begin(), table[id].end(), it));
@@ -172,29 +172,29 @@ class HashMap {
 
     // Erases all data from the hash table, preserving the number of buckets.
     void clear() {
-        for (const auto &elem : all) {
-            std::size_t id = bucketId(elem.first);
+        for (const auto &elem: all) {
+            size_t id = bucketId(elem.first);
             table[id].clear();
         }
         all.clear();
         allSize = 0;
     }
 
-  private:
+private:
     Hash hasher;
-    std::size_t allSize;
+    size_t allSize;
     std::list<ConstKeyVal> all;
     std::vector<std::list<ElemIter>> table;
 
     // Bucket number by key.
-    std::size_t bucketId(const KeyType &key) const {
+    size_t bucketId(const KeyType &key) const {
         return hasher(key) % table.size();
     }
 
     // Initializes buckets based on all elements
-    void initBuckets(std::size_t tableSize) {
+    void initBuckets(size_t tableSize) {
         table.clear();
-        table.resize(std::max(tableSize, std::size_t(1)));
+        table.resize(std::max(tableSize, (size_t) 1));
         for (ElemIter it = all.begin(); it != all.end(); ++it) {
             table[bucketId(it->first)].push_front(it);
         }
